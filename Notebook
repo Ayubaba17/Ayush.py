@@ -1,0 +1,137 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import tensorflow as tf
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Conv2D, Dense, BatchNormalization, Flatten, Activation, LayerNormalization, Reshape
+from keras.optimizers import Adam
+
+df = pd.read_csv('/kaggle/input/sudokudataset/sudoku.csv')
+
+X = np.array(df.quizzes.map(lambda x: list(map(int, x))).to_list())
+Y = np.array(df.solutions.map(lambda x: list(map(int, x))).to_list())
+
+
+X = X.reshape(-1, 9, 9, 1)
+Y = Y.reshape(-1, 9, 9) - 1
+
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size = 0.2)
+
+model = Sequential()
+
+model.add(Conv2D(128, 3, activation='relu', padding='same', input_shape = (9, 9, 1)))
+model.add(BatchNormalization())
+model.add(Conv2D(128, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(256, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(256, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(512, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(512, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(1024, 3, activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(9, 3, activation='relu', padding='same'))
+model.add(Flatten())
+model.add(Dense(512))
+model.add(Dense(81*9))
+model.add(LayerNormalization(axis=-1))
+model.add(Reshape((9, 9, 9)))
+model.add(Activation('softmax'))
+
+model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(), metrics=['accuracy'])
+
+model.summary()
+
+model.fit(x_train, y_train, batch_size=64, epochs=10, validation_data=(x_test, y_test))
+
+model.evaluate(x_test, y_test)
+
+model.save('/kaggle/working/mindlock-model.h5')
+/opt/conda/lib/python3.10/site-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.3
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ conv2d (Conv2D)             (None, 9, 9, 128)         1280      
+                                                                 
+ batch_normalization (Batch  (None, 9, 9, 128)         512       
+ Normalization)                                                  
+                                                                 
+ conv2d_1 (Conv2D)           (None, 9, 9, 128)         147584    
+                                                                 
+ batch_normalization_1 (Bat  (None, 9, 9, 128)         512       
+ chNormalization)                                                
+                                                                 
+ conv2d_2 (Conv2D)           (None, 9, 9, 256)         295168    
+                                                                 
+ batch_normalization_2 (Bat  (None, 9, 9, 256)         1024      
+ chNormalization)                                                
+                                                                 
+ conv2d_3 (Conv2D)           (None, 9, 9, 256)         590080    
+                                                                 
+ batch_normalization_3 (Bat  (None, 9, 9, 256)         1024      
+ chNormalization)                                                
+                                                                 
+ conv2d_4 (Conv2D)           (None, 9, 9, 512)         1180160   
+                                                                 
+ batch_normalization_4 (Bat  (None, 9, 9, 512)         2048      
+ chNormalization)                                                
+                                                                 
+ conv2d_5 (Conv2D)           (None, 9, 9, 512)         2359808   
+                                                                 
+ batch_normalization_5 (Bat  (None, 9, 9, 512)         2048      
+ chNormalization)                                                
+                                                                 
+ conv2d_6 (Conv2D)           (None, 9, 9, 1024)        4719616   
+                                                                 
+ batch_normalization_6 (Bat  (None, 9, 9, 1024)        4096      
+ chNormalization)                                                
+                                                                 
+ conv2d_7 (Conv2D)           (None, 9, 9, 9)           82953     
+                                                                 
+ flatten (Flatten)           (None, 729)               0         
+                                                                 
+ dense (Dense)               (None, 512)               373760    
+                                                                 
+ dense_1 (Dense)             (None, 729)               373977    
+                                                                 
+ layer_normalization (Layer  (None, 729)               1458      
+ Normalization)                                                  
+                                                                 
+ reshape (Reshape)           (None, 9, 9, 9)           0         
+                                                                 
+ activation (Activation)     (None, 9, 9, 9)           0         
+                                                                 
+=================================================================
+Total params: 10137108 (38.67 MB)
+Trainable params: 10131476 (38.65 MB)
+Non-trainable params: 5632 (22.00 KB)
+_________________________________________________________________
+Epoch 1/10
+12500/12500 [==============================] - 422s 33ms/step - loss: 0.5487 - accuracy: 0.8022 - val_loss: 0.2488 - val_accuracy: 0.9100
+Epoch 2/10
+12500/12500 [==============================] - 408s 33ms/step - loss: 0.1940 - accuracy: 0.9302 - val_loss: 0.1631 - val_accuracy: 0.9417
+Epoch 3/10
+12500/12500 [==============================] - 406s 32ms/step - loss: 0.1394 - accuracy: 0.9502 - val_loss: 0.1319 - val_accuracy: 0.9528
+Epoch 4/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.1131 - accuracy: 0.9596 - val_loss: 0.1160 - val_accuracy: 0.9586
+Epoch 5/10
+12500/12500 [==============================] - 404s 32ms/step - loss: 0.0964 - accuracy: 0.9656 - val_loss: 0.1072 - val_accuracy: 0.9621
+Epoch 6/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.0841 - accuracy: 0.9699 - val_loss: 0.1010 - val_accuracy: 0.9643
+Epoch 7/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.0744 - accuracy: 0.9734 - val_loss: 0.0986 - val_accuracy: 0.9655
+Epoch 8/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.0663 - accuracy: 0.9762 - val_loss: 0.0969 - val_accuracy: 0.9665
+Epoch 9/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.0592 - accuracy: 0.9787 - val_loss: 0.0974 - val_accuracy: 0.9667
+Epoch 10/10
+12500/12500 [==============================] - 405s 32ms/step - loss: 0.0530 - accuracy: 0.9809 - val_loss: 0.0973 - val_accuracy: 0.9673
+6250/6250 [==============================] - 49s 8ms/step - loss: 0.0973 - accuracy: 0.9673
+/opt/conda/lib/python3.10/site-packages/keras/src/engine/training.py:3000: UserWarning: You are saving your model as an HDF5 file via `model.save()`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')`.
+  saving_api.save_model(
